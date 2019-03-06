@@ -8,7 +8,7 @@ fi
 
 CPU_JOB_NUM=$(nproc --all)
 
-KERNEL_CROSS_COMPILE_PATH="arm-linux-androideabi-"
+KERNEL_CROSS_COMPILE_PATH="/opt/toolchains/arm-eabi-4.8/bin/arm-eabi-"
 echo "cross compiler path: $KERNEL_CROSS_COMPILE_PATH"
 
 PRODUCT_BOARD=$1
