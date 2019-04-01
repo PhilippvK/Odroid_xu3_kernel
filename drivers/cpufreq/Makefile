@@ -19,7 +19,9 @@ obj-$(CONFIG_CPU_FREQ_GOV_OPTIGAME)     += optigame_governor.o \
 ccflags-$(CONFIG_CPU_FREQ_GOV_OPTIGAME) += -Idrivers/gpu/arm/midgard
 ccflags-$(CONFIG_CPU_FREQ_GOV_OPTIGAME) += -DSOC_NAME=5422
 ccflags-$(CONFIG_CPU_FREQ_GOV_OPTIGAME) += -DMALI_CUSTOMER_RELEASE=1
-
+#dominiks GOV
+obj-$(CONFIG_CPU_FREQ_GOV_DOMINIKSGOV)        += cpufreq_dominiksgov.o
+obj-$(CONFIG_CPU_FREQ_GOV_DOMINIKSGOV)        += cpufreq_dominiksgov_helper_functions.o
 
 # CPUfreq cross-arch helpers
 obj-$(CONFIG_CPU_FREQ_TABLE)		+= freq_table.o
