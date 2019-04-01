@@ -9,7 +9,10 @@
 #
 # Normal rules (sorted alphabetically)
 #
-arch/arm/boot
+arch/arm/boot/Image
+arch/arm/boot/compressed
+arch/arm/boot/zImage
+arch/arm/boot/zImage-dtb
 .*
 *.a
 *.asn1.[ch]
