@@ -1094,7 +1094,7 @@ int write_thread_name_log(void *in){
 	mm_segment_t old_fs;
 	struct task_struct *ts;
 	char buf[16]={"\0"};
-	int a, b;
+	int a; //, b;
 	ts=(struct task_struct*)in;
 
 	if (in==NULL || fp_thread_name_logging==NULL){
