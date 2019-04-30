@@ -10,6 +10,8 @@ fi
 
 PRODUCT_BOARD=$1
 
+$ROOT_DIR/install_modules.sh "$ANDROID_DEVICE" # ???
+
 adb $ANDROID_DEVICE reboot fastboot
 
 fastboot flash kernel $ROOT_DIR/arch/arm/boot/zImage-dtb
