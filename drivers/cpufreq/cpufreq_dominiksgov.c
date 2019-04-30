@@ -348,10 +348,12 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 
 	struct cpufreq_policy *policy;
 	int a;
+	KERNEL_DEBUG_MSG("GOV: MyIOctl called!");
 
 	switch (cmd){
 	//ioctl command from opengl library that a new frame is about to be processed
 	case IOCTL_CMD_NEW_FRAME:
+	    KERNEL_DEBUG_MSG("GOV: IOCTL_CMD_NEW_FRAME");
 		//prevent overlaps in ioctl calls
 		if(iciotl_new_frame_inuse==1){
 			KERNEL_ERROR_MSG("ERROR: IOCTL overlap! \n");
