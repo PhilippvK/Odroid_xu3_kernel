@@ -1027,7 +1027,7 @@ int shutdown_a15(void * in){
 	return ret_shutdown;
 }
 
-int enable_a15(void * in){
+int __cpuinit enable_a15(void * in){
 	int a=0, ret_enable=0;
 	A15_online=1;
 	shut_down_core=1;
