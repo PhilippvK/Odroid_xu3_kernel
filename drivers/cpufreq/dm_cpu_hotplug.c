@@ -743,16 +743,15 @@ static int on_run(void *data)
 		pr_info("big cores hotplug out : %d\n", big_hotpluged);
 #endif
 #endif
-		if (exynos_dm_hotplug_disabled())
-			continue;
+		if (!exynos_dm_hotplug_disabled()) {
+			if (prev_cmd != exe_cmd) {
+				ret = dynamic_hotplug(exe_cmd);
+				if (ret < 0)
+					goto failed_out;
+			}
 
-		if (prev_cmd != exe_cmd) {
-			ret = dynamic_hotplug(exe_cmd);
-			if (ret < 0)
-				goto failed_out;
+			prev_cmd = exe_cmd;
 		}
-
-		prev_cmd = exe_cmd;
 
 		set_current_state(TASK_INTERRUPTIBLE);
 		schedule_timeout_interruptible(msecs_to_jiffies(delay));
