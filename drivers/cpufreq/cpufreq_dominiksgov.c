@@ -140,6 +140,9 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 		 * governor function with the start and stop events. These calls have to be ignored
 		 */
 		if(shut_down_core==1){
+            if (policy->cpu==4) {
+                number_cpus++;
+            }
 			break;
 		}
 		//set the is managed flag for the respective cpu
@@ -231,26 +234,27 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 
 		//reset ismanaged flag
 		if ((policy->cpu==0 || policy->cpu==1 || policy->cpu==2 || policy->cpu==3) && cpu_online(policy->cpu) && shut_down_core == 0){
-						a7ismanaged=0;
-						//decrement numbers of cpus managed
-						number_cpus--;
-					}
-					else if((policy->cpu==4 || policy->cpu==5 || policy->cpu==6 || policy->cpu==7) && cpu_online(policy->cpu) && shut_down_core == 0){
-						a15ismanaged=0;
-						KERNEL_ERROR_MSG("A15 not managed !\n");
-						//decrement numbers of cpus managed
-						number_cpus--;
-					}
-					else if (shut_down_core == 1){
-						//KERNEL_ERROR_MSG("GOV STOP MSG because of core shutdown \n");
-
-					}
-					else{
-						KERNEL_ERROR_MSG("ERROR: Unknown CPU-Nr.: %u\n", policy->cpu);
-					}
-
+            a7ismanaged=0;
+            //decrement numbers of cpus managed
+            number_cpus--;
+        }
+		else if((policy->cpu==4 || policy->cpu==5 || policy->cpu==6 || policy->cpu==7) && cpu_online(policy->cpu) && shut_down_core == 0){
+            a15ismanaged=0;
+            KERNEL_ERROR_MSG("GOV|A15 not managed !\n");
+	        //decrement numbers of cpus managed
+		    number_cpus--;
+		}
+		else if (shut_down_core == 1){
+			KERNEL_ERROR_MSG("GOV|GOV STOP MSG because of core shutdown \n");
+            if (policy->cpu==4) {
+                number_cpus--;
+            }
+		}
+		else{
+			KERNEL_ERROR_MSG("GOV|ERROR: Unknown CPU-Nr.: %u\n", policy->cpu);
+		}
 		//remove char device if no cpu is managed anymore
-		if (number_cpus==0){
+		if (number_cpus==0) {
 			IoctlExit();
 #ifdef DO_LOGGING
 			/*
