@@ -27,7 +27,7 @@
 #define POWERGATING_GAMEOPTIMIZED_GOV
 
 //define to enable thread name logging
-#define THREAD_NAME_LOGGING
+//#define THREAD_NAME_LOGGING
 #ifdef THREAD_NAME_LOGGING
 	#define LOGFILE_THREAD_NAME "/data/local/GameOptimized_Gov_Thread_Name_LOG"
 	#pragma message("Compiled with thread name logging flag!")
