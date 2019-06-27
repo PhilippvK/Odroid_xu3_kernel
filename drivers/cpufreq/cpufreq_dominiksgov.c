@@ -859,7 +859,6 @@ void inline perform_task_allocation(struct task_struct *task){
 	//--------------------------------------------------
 
 	if (task->task_informations->prediction_cycles==0){
-		//sched_setaffinity_own(task, 3);
 		return;
 	}
 
