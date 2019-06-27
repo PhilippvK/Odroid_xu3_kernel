@@ -399,7 +399,8 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 		//time for processing was bigger than the target time -> frame rate too low
 		if(is_init){
 			error_buff=(((int64_t)ioctl_arg.time)-time_buf)- (int64_t)ioctl_arg.sleep_time -target_time;
-			if (error_buff < target_time){
+			//if (error_buff < target_time){
+			if (error_buff < target_time*2){ // TODO: test 7.5 fps limit
 				if(error_buff>(target_time - target_time_upper_bound)){ //FRAME MISS
 					frame_rate_error+=div_s64(error_buff*AGGRESSIVENESS_FACTOR_UP, 100);
 				}
