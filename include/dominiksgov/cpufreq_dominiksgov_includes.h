@@ -44,9 +44,9 @@
 
 #define SHUTDOWN_LIMIT 10
 
-#define REPORT_DEBUG    1
+#define REPORT_DEBUG    0
 #define REPORT_ERROR    1
-#define REPORT_VERBOSE  1
+#define REPORT_VERBOSE  0
 #define REPORT_WARNING 	1
 
 #define FIRST_MINOR 0
