@@ -54,6 +54,7 @@ static short number_cpus=0;
 static int a7ismanaged=0;
 static int a15ismanaged=0;
 
+int64_t nr_write_threads2=0;
 #ifdef DO_DEBUG
 	//count function calls and number threads ->needed for debugging
 	static int thread_count=0;
@@ -69,6 +70,7 @@ static DEFINE_MUTEX(hotplug_mutex);
 
 #ifdef THREAD_NAME_LOGGING
 	DEFINE_MUTEX(logfile_thread_name_mutex);
+	DEFINE_MUTEX(logstruct_thread_name_mutex);
 #endif
 
 //variables for task allocation
@@ -461,6 +463,11 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 		//find the froup leader task
 		group_leader_task=current->group_leader;
 
+        // TODO: test
+        while (nr_write_threads2 > 0) {
+            KERNEL_ERROR_MSG("GOV|nr_write_threads2 > 0 (%lld)!\n",nr_write_threads2);
+            udelay(100);
+        }
 		//iterate through all tasks
 		list_for_each_entry_safe(task, task_buffer ,&(group_leader_task->thread_group), thread_group){
 			process_task(task);
@@ -1055,7 +1062,6 @@ int __cpuinit enable_a15(void * in){
 //#endif
 
 int64_t nr_write_threads=0;
-int64_t nr_write_threads2=0;
 
 
 #ifdef DO_LOGGING
@@ -1095,15 +1101,16 @@ int write_thread_name_log(void *in){
 	struct task_struct *ts;
 	char buf[16]={"\0"};
 	int a; //, b;
-	ts=(struct task_struct*)in;
+
+    ts=(struct task_struct*)in;
 
 	if (in==NULL || fp_thread_name_logging==NULL){
-		KERNEL_ERROR_MSG("Can't write log because file is closed\n");
+		KERNEL_ERROR_MSG("GOV|Can't write log because file is closed\n");
 		do_exit(-99);
 		return -99;
 	}
 
-	KERNEL_ERROR_MSG("Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
+	//KERNEL_ERROR_MSG("GOV|Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
 	//udelay(100);
 	nr_write_threads2++;
 	old_fs = get_fs();
