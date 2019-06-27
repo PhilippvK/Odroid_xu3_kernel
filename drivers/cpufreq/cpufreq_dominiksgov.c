@@ -2,7 +2,7 @@
  *  linux/drivers/cpufreq/cpufreq_powersave.c
  *
  *  Copyright (C) 2015 - 2016 Dominik Füß <dominik.fuess@tum.de>
- *
+ *  Copyright (C) 2019 Philipp van Kempen <philipp.van-kempen@tum.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -593,24 +593,7 @@ static struct file_operations ioctlFops =
     .read=MyRead,
     .write=MyWrite,
 };
-/*
-static int my_dev_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-    add_uevent_var(env, "DEVMODE=%#o", 7446);
-    KERNEL_ERROR_MSG("SET PERMISSION\n");
-    return 0;
-}
-static char *tty_devnode(struct device *dev, umode_t *mode)
-{
-        if (!mode)
-                return NULL;
-        //if (dev->devt == MKDEV(TTYAUX_MAJOR, 0) ||
-        //    dev->devt == MKDEV(TTYAUX_MAJOR, 2))
-        *mode = 0666;
-        KERNEL_ERROR_MSG("SET PERMISSIO2N\n");
-        return NULL;
-}
-*/
+
 static int IoctlInit(void)
 {//initialization of char device
     int ret;
@@ -860,7 +843,7 @@ int64_t inline convert_a15cpucycles_to_a7(int64_t cycles_in){
 	return cycles_out;
 }
 
-//allocate the task to a sufficient core and update the cpu-frequency vriables accordingly
+//allocate the task to a sufficient core and update the cpu-frequency variables accordingly
 void inline perform_task_allocation(struct task_struct *task){
 	//nr of core with maximum space left
 	short a7core_max_space;
@@ -868,9 +851,9 @@ void inline perform_task_allocation(struct task_struct *task){
 	short curr_frequ_a7_nr_buff;
 	int64_t a7space_buff[4];
 	int i;
-	//--------------------------------------------
-	//if prediction is zero: keep the old configuration---------
-	//--------------------------------------------
+	//--------------------------------------------------
+	//if prediction is zero: keep the old configuration-
+	//--------------------------------------------------
 
 	if (task->task_informations->prediction_cycles==0){
 		//sched_setaffinity_own(task, 3);
