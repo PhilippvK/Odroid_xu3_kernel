@@ -33,7 +33,7 @@
 	#pragma message("Compiled with thread name logging flag!")
 #endif
 
-#define CPUCYCLE_COVERSION_FACTOR 171
+#define CPUCYCLE_COVERSION_FACTOR 201
 
 #define AGGRESSIVENESS_FACTOR_UP 20
 #define AGGRESSIVENESS_FACTOR_DOWN 5
