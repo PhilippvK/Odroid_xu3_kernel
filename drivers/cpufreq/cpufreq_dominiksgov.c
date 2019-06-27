@@ -492,24 +492,26 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 
 		//set the cpu frequencies
 		policy=cpufreq_cpu_get(0);
-		cpufreq_set(policy, a7available_frequencies[curr_frequ_a7_nr]*1000); //cpufreq_set wants to have the frequency in kHz
-		cpufreq_cpu_put(policy);
+        if (policy) {
+            cpufreq_set(policy, a7available_frequencies[curr_frequ_a7_nr]*1000); //cpufreq_set wants to have the frequency in kHz
+            cpufreq_cpu_put(policy);
+        } else {
+            KERNEL_ERROR_MSG("GOV|Policy for A7 not available!\n");
+        }
 
-		//!!!!always use cpufreq_cpu_put after cpufreq_cpu_get to release resources!!!!!!
-		if(cpu_online(4) && cpu_online(5) && cpu_online(6) && cpu_online(7) && A15_online==1){
-			mutex_lock(&hotplug_mutex);
-			policy = cpufreq_cpu_get(4);
-			//KERNEL_ERROR_MSG("Setting a 15 frequ: %lld", a15available_frequencies[curr_frequ_a15_nr]*1000);
-			cpufreq_set(policy, a15available_frequencies[curr_frequ_a15_nr]*1000);
-			cpufreq_cpu_put(policy);
-			mutex_unlock(&hotplug_mutex);
-		}
+        //!!!!always use cpufreq_cpu_put after cpufreq_cpu_get to release resources!!!!!!
+        if(cpu_online(4) && cpu_online(5) && cpu_online(6) && cpu_online(7) && A15_online==1){
+            mutex_lock(&hotplug_mutex);
+            policy = cpufreq_cpu_get(4);
+            if (policy) {
+                cpufreq_set(policy, a15available_frequencies[curr_frequ_a15_nr]*1000);
+                cpufreq_cpu_put(policy);
+            } else {
+                KERNEL_ERROR_MSG("GOV|Policy for A15 not available!\n");
+            }
+            mutex_unlock(&hotplug_mutex);
+        }
 
-		//logging output
-		/*KERNEL_ERROR_MSG("123456789, %llu, %u, %u, %d, %d, %d, %d, %d, %d, %d, %d, %d, %llu \n", frame_rate, a7frequency, a15frequency, \
-		*		nr_tasks_on_cpu[0], nr_tasks_on_cpu[1], nr_tasks_on_cpu[2], nr_tasks_on_cpu[3], nr_tasks_on_cpu[4], nr_tasks_on_cpu[5], \
-		*		nr_tasks_on_cpu[6], nr_tasks_on_cpu[7], number_allocation_chances, ioctl_arg.time);
-		*/
 #ifdef DO_LOGGING
 		//copy data to log struct
 		mutex_lock(&logfile_mutex);
