@@ -128,11 +128,12 @@ static timer_struct autocorr_timer = {
 //called if events occur
 static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned int event){
 	mm_segment_t old_fs;
-
-	KERNEL_DEBUG_MSG("CPU: %u, last CPU: %u\n", policy->cpu, policy->last_cpu);
+	KERNEL_DEBUG_MSG("GOV|CPU: %u, last CPU: %u\n", policy->cpu, policy->last_cpu);
 	switch (event) {
 	//event if governor has started->for each cpu independently 
 	case CPUFREQ_GOV_START:
+        // TODO: REMOVE
+		KERNEL_ERROR_MSG("GOV|GOV START Event called for CPU: %d, CPU online: %d\n", policy->cpu, cpu_online(policy->cpu));
 
 		/*
 		 * shut_down_core is set if the cores are shutdown or rebooted. This causes a call of the
@@ -149,7 +150,7 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 					a15ismanaged=1;
 				}
 				else{
-					KERNEL_ERROR_MSG("ERROR: Unknown CPU-Nr.: %u \n", policy->cpu);
+					KERNEL_ERROR_MSG("GOV|ERROR: Unknown CPU-Nr.: %u \n", policy->cpu);
 				}
 
 		//increment number of used cpus
@@ -158,10 +159,10 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 		//initialize char device (only for first init)
 		if (number_cpus==1) {
 			if (IoctlInit()!=0){
-				KERNEL_ERROR_MSG("ERROR: could not initialize char device!\n");
+				KERNEL_ERROR_MSG("GOV|ERROR: could not initialize char device!\n");
 			}
 			else {
-				KERNEL_DEBUG_MSG("char device, successfully initialized!\n");
+				KERNEL_DEBUG_MSG("GOV|char device, successfully initialized!\n");
 			}
 		}
 	
@@ -179,11 +180,11 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 		mutex_unlock(&logfile_mutex);
 
 		if (fp_loggin_file == NULL) {
-			KERNEL_ERROR_MSG("Can't  open Logging File \n");
+			KERNEL_ERROR_MSG("GOV|Can't  open Logging File \n");
 		}
 		else{
 			if(logging_file_open==0){
-				KERNEL_DEBUG_MSG("Opened Logging File \n");
+				KERNEL_DEBUG_MSG("GOV|Opened Logging File \n");
 				logging_file_open=1;
 			}
 		}
@@ -205,11 +206,11 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 		mutex_unlock(&logfile_thread_name_mutex);
 
 		if(fp_thread_name_logging==NULL){
-			KERNEL_ERROR_MSG("Can't  open Thread Name Logging File \n");
+			KERNEL_ERROR_MSG("GOV|Can't  open Thread Name Logging File \n");
 		}
 		else{
 			if(logging_file_thread_name_open==0){
-				KERNEL_DEBUG_MSG("Opened Thread Name Logging File \n");
+				KERNEL_DEBUG_MSG("GOV|Opened Thread Name Logging File \n");
 				logging_file_thread_name_open=1;
 			}
 		}
@@ -217,7 +218,7 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 #endif
 
 
-		KERNEL_DEBUG_MSG("setting to %u kHz because of event %u\n", policy->min, event);
+		KERNEL_DEBUG_MSG("GOV|setting to %u kHz because of event %u\n", policy->min, event);
 		__cpufreq_driver_target(policy, policy->min, CPUFREQ_RELATION_L); //start with min frequency
 		break;
 	case CPUFREQ_GOV_LIMITS:
@@ -225,7 +226,7 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 		
 	//governor has been stopped
 	case CPUFREQ_GOV_STOP:
-		//KERNEL_ERROR_MSG("GOV STOP Event called for CPU: %d, CPU online: %d\n", policy->cpu, cpu_online(policy->cpu));
+		KERNEL_ERROR_MSG("GOV|GOV STOP Event called for CPU: %d, CPU online: %d\n", policy->cpu, cpu_online(policy->cpu));
 
 
 		//reset ismanaged flag
@@ -261,7 +262,7 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 			mutex_lock(&logfile_mutex);
 			filp_close(fp_loggin_file, 0);
 			logging_file_open=0;
-			KERNEL_DEBUG_MSG("Closed Logging File \n");
+			KERNEL_DEBUG_MSG("GOV|Closed Logging File \n");
 			mutex_unlock(&logfile_mutex);
 
 			set_fs(old_fs);
@@ -277,14 +278,14 @@ static int cpufreq_governor_dominiksgov(struct cpufreq_policy *policy, unsigned 
 			mutex_lock(&logfile_thread_name_mutex);
 			filp_close(fp_thread_name_logging, 0);
 			logging_file_thread_name_open=0;
-			KERNEL_DEBUG_MSG("Closed Thread Name Logging File \n");
+			KERNEL_DEBUG_MSG("GOV|Closed Thread Name Logging File \n");
 			mutex_unlock(&logfile_thread_name_mutex);
 
 			set_fs(old_fs);
 #endif
 		}
 
-		KERNEL_DEBUG_MSG("Governor stopped");
+		KERNEL_DEBUG_MSG("GOV|Governor stopped");
 		break;
 	default:
 		break;
@@ -350,17 +351,16 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 
 	struct cpufreq_policy *policy;
 	int a;
-	KERNEL_DEBUG_MSG("GOV: MyIOctl called!");
 
 	switch (cmd){
 	//ioctl command from opengl library that a new frame is about to be processed
 	case IOCTL_CMD_NEW_FRAME:
-	    KERNEL_DEBUG_MSG("GOV: IOCTL_CMD_NEW_FRAME");
+        // TODO: preempt_disable?
 		//prevent overlaps in ioctl calls
 		if(iciotl_new_frame_inuse==1){
-			KERNEL_ERROR_MSG("ERROR: IOCTL overlap! \n");
+			KERNEL_ERROR_MSG("GOV|ERROR: IOCTL overlap! \n");
 			if (copy_from_user(&ioctl_arg, (ioctl_struct_new_frame *)arg, sizeof(ioctl_struct_new_frame))){
-				KERNEL_ERROR_MSG("ERROR: Copy from user failed! \n");
+				KERNEL_ERROR_MSG("GOV|ERROR: Copy from user failed! \n");
 				return -EACCES;
 			}
 			time_buf=ioctl_arg.time;
@@ -370,15 +370,15 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 
 		//copy arguments from user space
 		if (copy_from_user(&ioctl_arg, (ioctl_struct_new_frame *)arg, sizeof(ioctl_struct_new_frame))){
-			KERNEL_ERROR_MSG("ERROR: Copy from user failed! \n");
-			//preempt_enable();
+			KERNEL_ERROR_MSG("GOV|ERROR: Copy from user failed! \n");
+			//preempt_enable(); // TODO: comment in and test
 			return -EACCES;
 		}
 
 		//calculate actual frame rate
 		frame_rate = div64_u64(10e9, ioctl_arg.time-time_buf); //framerate=10^9/(time_now-time_last_call) ->10e9 to get higher precission (305=30.5fps)
 		if (frame_rate>1000){ //sometimes framerates over 100 occur (mostly if game or level is loading)
-			KERNEL_ERROR_MSG("ERROR: Invalid Frame Rate: %llu\n", frame_rate);
+			KERNEL_ERROR_MSG("GOV|ERROR: Invalid Frame Rate: %llu\n", frame_rate);
 			goto exit;
 		}
 		
@@ -423,7 +423,7 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 
 		//check if both cpus are managed by the governor
 		if(!(a7ismanaged==1 && a15ismanaged==1)){
-			KERNEL_ERROR_MSG("ERROR: Not all CPUs are managed: A7: %d, A15: %d \n", a7ismanaged, a15ismanaged);
+			KERNEL_ERROR_MSG("GOV|ERROR: Not all CPUs are managed: A7: %d, A15: %d \n", a7ismanaged, a15ismanaged);
 			goto exit;
 		}
 		
@@ -534,10 +534,10 @@ exit:
 		iciotl_new_frame_inuse=0;
 		break;
 	default:
-		KERNEL_ERROR_MSG("ERROR:  IOCTL CMD not known!!\n");
+		KERNEL_ERROR_MSG("GOV|ERROR:  IOCTL CMD not known!!\n");
 		return(-1);
 	}
-	//preempt_enable();
+	//preempt_enable(); // TODO: comment in and test
 	return( 0 );
 }
 
@@ -553,7 +553,7 @@ static int MyClose(struct inode *i, struct file *f)
 
 static ssize_t MyRead(struct file *file, char *buffer, size_t length, loff_t *offset)
 {
-	KERNEL_VERBOSE_MSG("device_read(%p,%p,%d)\n", file, buffer, length);
+	KERNEL_VERBOSE_MSG("GOV|device_read(%p,%p,%d)\n", file, buffer, length);
 	return 0;
 }
 
@@ -570,8 +570,8 @@ static int device_write(struct inode *inode,
                         int length)
 #endif
 {
-  KERNEL_VERBOSE_MSG ("Entered message: %s \n", buffer);
-  KERNEL_VERBOSE_MSG ("device_write(%p,%s,%d)", file, buffer, length);
+  KERNEL_VERBOSE_MSG ("GOV|Entered message: %s \n", buffer);
+  KERNEL_VERBOSE_MSG ("GOV|device_write(%p,%s,%d)", file, buffer, length);
 
   return length;
 }
@@ -649,7 +649,7 @@ static int IoctlInit(void)
 
 static void IoctlExit(void)
 {//remove char device
-  KERNEL_VERBOSE_MSG("Cleanup_module called\n");
+  KERNEL_VERBOSE_MSG("GOV|Cleanup_module called\n");
   device_destroy(cl, dev);
   class_destroy(cl);
   cdev_del(&c_dev);
@@ -662,7 +662,7 @@ static void IoctlExit(void)
 static int cpufreq_set(struct cpufreq_policy *policy, unsigned int freq)
 {
 	int ret = -EINVAL;
-	KERNEL_VERBOSE_MSG("cpufreq_set for cpu %u, freq %u kHz\n", policy->cpu, freq);
+	KERNEL_VERBOSE_MSG("GOV|cpufreq_set for cpu %u, freq %u kHz\n", policy->cpu, freq);
 	
 	ret = __cpufreq_driver_target(policy, freq, CPUFREQ_RELATION_L);
 	
@@ -675,11 +675,11 @@ static int cpufreq_set(struct cpufreq_policy *policy, unsigned int freq)
 			a15frequency=freq;
 		}
 		else {
-			KERNEL_ERROR_MSG("ERROR: Set invalid core %u to frequency: %u \n", policy->cpu, freq);
+			KERNEL_ERROR_MSG("GOV|ERROR: Set invalid core %u to frequency: %u \n", policy->cpu, freq);
 		}
 	}
 	else{
-		KERNEL_ERROR_MSG("ERROR: Setting frequency to %u for cpu: %d failed!\n", freq, policy->cpu);
+		KERNEL_ERROR_MSG("GOV|ERROR: Setting frequency to %u for cpu: %d failed!\n", freq, policy->cpu);
 	}
 
 	return ret;
@@ -739,7 +739,7 @@ long inline sched_setaffinity_own(struct task_struct *task, short core_nr){
 
 				//check number of iterations to not get an infinity loop!
 				if(count_loop>10000){
-					KERNEL_ERROR_MSG("Timeout for boot of core nr %d (Time > 1s)\n Can't assign task!\n", core_nr);
+					KERNEL_ERROR_MSG("GOV|Timeout for boot of core nr %d (Time > 1s)\n Can't assign task!\n", core_nr);
 					return -998;
 				}
 			}
@@ -748,7 +748,7 @@ long inline sched_setaffinity_own(struct task_struct *task, short core_nr){
 		//set task affinity
 		return sched_setaffinity(task->pid, get_cpu_mask((unsigned int)core_nr));}
 	else {
-		KERNEL_ERROR_MSG("ERROR: Wrong CPU-Number: %d\n", core_nr);
+		KERNEL_ERROR_MSG("GOV|ERROR: Wrong CPU-Number: %d\n", core_nr);
 		return -999;
 	}
 }
@@ -760,9 +760,11 @@ void inline init_task_struct_expansion(struct task_struct *task){
 	//allocate memory for the task_struct_expansion struct
 	task->task_informations=(task_struct_expansion *)kmalloc(sizeof(task_struct_expansion), GFP_KERNEL);
 	if(task->task_informations==NULL){
-		KERNEL_ERROR_MSG("ERROR:  INIT of Task: %d  FAILED\n", task->pid);
+		KERNEL_ERROR_MSG("GOV|ERROR:  INIT of Task: %d  FAILED\n", task->pid);
 		return;
-	}
+	} /*else { // TODO: remove after test
+        KERNEL_ERROR_MSG("GOV|DEBUG:  INIT of Task %d with the following priorities: %d , %d , %d\n", task->pid, task->prio, task_prio(task), task_nice(task));
+    }*/
 	//init all vars inside the struct
 	task->task_informations->pid=task->pid;
 	task->task_struct_expansion_is_initialized=1;
@@ -813,7 +815,7 @@ void inline perform_workload_prediction(struct task_struct *task){
 		task->task_informations->prediction_cycles=convert_a15cpucycles_to_a7(task->task_informations->prediction_cycles);//convert to unified processor cycles
 	}
 	else {
-		KERNEL_ERROR_MSG("ERROR: Task %d was allocated to a invalid core Nr: %d \n", task->pid, task->task_informations->allocated_core);
+		KERNEL_ERROR_MSG("GOV|ERROR: Task %d was allocated to a invalid core Nr: %d \n", task->pid, task->task_informations->allocated_core);
 	}
 }
 
@@ -949,7 +951,7 @@ void inline perform_task_allocation(struct task_struct *task){
 //check if there is enough space on a core, if yes -> assign to that core
 short inline check_space_left_and_assignA7(struct task_struct *task, short core_nr){
 	if (core_nr>=4 || core_nr < 0){
-		KERNEL_ERROR_MSG("ERROR: Wrong A7 core number: %d \n", core_nr);
+		KERNEL_ERROR_MSG("GOV|ERROR: Wrong A7 core number: %d \n", core_nr);
 	}
 	if(a7space[core_nr] >= task->task_informations->prediction_cycles){
 		a7space[core_nr] -= task->task_informations->prediction_cycles;
@@ -989,7 +991,7 @@ short inline get_max_spaceA15(void *pointer){
 
 short inline check_space_left_and_assignA15(struct task_struct *task, short core_nr){//core number ={4-7}
 	if (core_nr<4 || core_nr > 7){
-		KERNEL_ERROR_MSG("ERROR: Wrong A15 core number: %d \n", core_nr);
+		KERNEL_ERROR_MSG("GOV|ERROR: Wrong A15 core number: %d \n", core_nr);
 	}
 	if(a15space[core_nr-4] >= task->task_informations->prediction_cycles){
 		a15space[core_nr-4] -= task->task_informations->prediction_cycles;
@@ -1015,12 +1017,13 @@ int shutdown_a15(void * in){
 	if(shutdown_counter_a15>SHUTDOWN_LIMIT){
 		A15_online=0;
 		shutdown_counter_a15=0;
+	    KERNEL_ERROR_MSG("GOV|DISABLE A15 \n");
 		for (a=4; a<8; a++){
 			if (cpu_online(a)){
 				//shut down cpu
 				ret_shutdown += cpu_down(a);
 				if (ret_shutdown){
-					KERNEL_ERROR_MSG("Can't shut down CPU %d \n", a);
+					KERNEL_ERROR_MSG("GOV|Can't shut down CPU %d \n", a);
 				}
 			}
 		}
@@ -1042,12 +1045,12 @@ int __cpuinit enable_a15(void * in){
 	mutex_lock(&hotplug_mutex);
 #ifdef CONFIG_HOTPLUG_CPU
 #ifdef POWERGATING_GAMEOPTIMIZED_GOV
-	KERNEL_ERROR_MSG("ENABLE A15 \n");
+	KERNEL_ERROR_MSG("GOV|ENABLE A15 \n");
 	for (a=4; a<8; a++){
 		if (!cpu_online(a)){
 			ret_enable += cpu_up(a);
 			if (ret_enable){
-				KERNEL_ERROR_MSG("Can't bring up CPU %d \n", a);
+				KERNEL_ERROR_MSG("GOV|Can't bring up CPU %d \n", a);
 			}
 		}
 	}
@@ -1070,7 +1073,7 @@ int write_log(void *in){
 	mm_segment_t old_fs;
 
 	if (in==NULL || fp_loggin_file==NULL){
-		KERNEL_ERROR_MSG("Can't write log beacuse file is closed\n");
+		KERNEL_ERROR_MSG("GOV|Can't write log beacuse file is closed\n");
 		do_exit(-99);
 		return -99;
 	}
@@ -1134,7 +1137,7 @@ int write_thread_name_log(void *in){
 
 	fp_thread_name_logging->f_op->write(fp_thread_name_logging, " \n", 2, &fp_thread_name_logging->f_pos);
 
-	//KERNEL_ERROR_MSG("ACorr: %lld \n", ts->task_informations->autocorr_max);
+	//KERNEL_ERROR_MSG("GOV|ACorr: %lld \n", ts->task_informations->autocorr_max);
 	nr_write_threads2--;
 	mutex_unlock(&logfile_thread_name_mutex);
 	set_fs(old_fs);
