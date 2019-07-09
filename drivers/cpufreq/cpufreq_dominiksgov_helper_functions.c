@@ -1,6 +1,8 @@
 #define WMA_length 14
 //#define WMA_length 7
 
+#include <linux/sched.h>
+
 //#include"/home/dominik/MA_code/GameOptimized_Governor/workspace_eclipse/unit_tests/includes/unit_tests.h"
 
 #include </home/foo/Android7.1/kernel/hardkernel/odroidxu3/include/dominiksgov/cpufreq_dominiksgov_includes.h>

@@ -13,6 +13,7 @@ typedef struct {
 	int64_t prediction_cycles;
 	int64_t cpu_time;
 	short allocated_core;
+    struct mutex lock;
 }task_struct_expansion;
 
 #endif

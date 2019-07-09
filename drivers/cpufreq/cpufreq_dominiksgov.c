@@ -686,6 +686,8 @@ void inline process_task(struct task_struct *task){
         init_task_struct_expansion(task);
     }
 
+    mutex_lock(&task->task_informations->lock);
+
     //update the workload history of the task
     update_workload_history(task);
 
@@ -701,6 +703,8 @@ void inline process_task(struct task_struct *task){
     perform_task_allocation(task);
 
     thread_count++;
+
+    mutex_unlock(&task->task_informations->lock);
 }
 
 //set the affinity of a task to a core (core_nr: 0-7)
@@ -1110,6 +1114,7 @@ int write_thread_name_log(void *in){
 
     mutex_lock(&logfile_thread_name_mutex);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, ts->comm, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
+    mutex_lock(&ts->task_informations->lock);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, "; ", 2, &fp_thread_name_logging->f_pos);
     sprintf(buf, "%lld", ts->task_informations->autocorr_max );
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
@@ -1128,6 +1133,7 @@ int write_thread_name_log(void *in){
 
     //KERNEL_ERROR_MSG("GOV|ACorr: %lld \n", ts->task_informations->autocorr_max);
     nr_write_threads2--;
+    mutex_unlock(&ts->task_informations->lock);
     mutex_unlock(&logfile_thread_name_mutex);
     set_fs(old_fs);
 
