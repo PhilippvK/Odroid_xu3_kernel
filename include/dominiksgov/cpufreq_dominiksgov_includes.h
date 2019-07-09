@@ -26,6 +26,9 @@
 //define to enable powergating
 #define POWERGATING_GAMEOPTIMIZED_GOV
 
+//define for debugging purposes
+//#define GOV_PRINT_SPACES
+
 //define to enable thread name logging
 //#define THREAD_NAME_LOGGING
 #ifdef THREAD_NAME_LOGGING

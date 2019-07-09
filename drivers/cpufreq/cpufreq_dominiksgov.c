@@ -543,6 +543,12 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
 #endif
             is_init=1;
 
+#ifdef GOV_PRINT_SPACES
+            KERNEL_ERROR_MSG("GOV|SPACELEFT:%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;\n",a7space[0],a7space[1],a7space[2],a7space[3],a15space[0],a15space[1],a15space[2],a15space[3]);
+            KERNEL_ERROR_MSG("GOV|SPACEINIT:%llu;%llu;\n",a7space_init,a15space_init);
+            KERNEL_ERROR_MSG("GOV|SPACEFREQ:%llu;%llu;\n",a7space_init+curr_frequ_a7_nr*a7_space_increase_per_frequency,a15space_init+curr_frequ_a15_nr*a15_space_increase_per_frequency);
+            KERNEL_ERROR_MSG("GOV|SPACEDECR:%llu;%llu;\n",a7space_decrement,a15space_decrement);
+#endif // GOV_PRINT_SPACES
 
 exit:
             iciotl_new_frame_inuse=0;
