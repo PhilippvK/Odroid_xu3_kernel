@@ -422,7 +422,7 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
                     a15space_decrement=div_s64(frame_rate_error*a15available_frequencies[0], 1e3);
                     a15space_decrement=convert_a15cpucycles_to_a7(a15space_decrement);
                     //}
-            }
+                }
             }
 
             time_buf=ioctl_arg.time;//holds the last time the function was called
@@ -739,6 +739,9 @@ long inline sched_setaffinity_own(struct task_struct *task, short core_nr){
                     return -998;
                 }
             }
+            if(count_loop>0) {
+                KERNEL_WARNING_MSG("GOV|WARNING:Waiting for core took %d iterations\n", count_loop);
+            }
         }
 
         //set task affinity
@@ -836,7 +839,7 @@ void inline update_autocorr(struct task_struct *task){
     //compute the autocorrelation for 20 lags
     autocorr(task->task_informations->workload_history, corr, SIZE_WORKLOAD_HISTORY-1, SIZE_WORKLOAD_HISTORY);
     //get maximum of the autocors and the shift of the maximum
-    get_max(&corr[1], 20, &corrmax, &maxpos);
+    get_max(&corr[1], SIZE_WORKLOAD_HISTORY-1, &corrmax, &maxpos);
     task->task_informations->autocorr_max=corrmax;
     task->task_informations->autocorr_shift=maxpos;
 
