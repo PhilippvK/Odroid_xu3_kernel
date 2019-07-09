@@ -382,8 +382,10 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
             //calculate actual frame rate
             frame_rate = div64_u64(10e9, ioctl_arg.time-time_buf); //framerate=10^9/(time_now-time_last_call) ->10e9 to get higher precission (305=30.5fps)
             if (frame_rate>1000){ //sometimes framerates over 100 occur (mostly if game or level is loading)
-                KERNEL_ERROR_MSG("GOV|ERROR: Invalid Frame Rate: %llu\n", frame_rate);
-                goto exit;
+                KERNEL_WARNING_MSG("GOV|WARNING: Invalid Frame Rate: %llu\n", frame_rate);
+                frame_rate=1000; // handle too high fps like a lower framerate
+                time_buf=ioctl_arg.time-div64_u64(10e9, 100); // TODO: test
+                //goto exit;
             }
 
             //calculate frame rate error
