@@ -21,6 +21,9 @@ ccflags-$(CONFIG_CPU_FREQ_GOV_OPTIGAME) += -DMALI_CUSTOMER_RELEASE=1
 #dominiks GOV
 obj-$(CONFIG_CPU_FREQ_GOV_DOMINIKSGOV)        += cpufreq_dominiksgov.o
 obj-$(CONFIG_CPU_FREQ_GOV_DOMINIKSGOV)        += cpufreq_dominiksgov_helper_functions.o
+# gamegovernor
+obj-$(CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR)        += cpufreq_gamegovernor.o
+obj-$(CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR)        += cpufreq_gamegovernor_helper_functions.o
 
 # CPUfreq cross-arch helpers
 obj-$(CONFIG_CPU_FREQ_TABLE)		+= freq_table.o

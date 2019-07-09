@@ -65,6 +65,12 @@ config CPU_FREQ_DEFAULT_GOV_DOMINIKSGOV
     help
       Use the CPUFreq governor 'dominiksgov' as default.
 
+config CPU_FREQ_DEFAULT_GOV_GAMEGOVERNORV
+    bool "gamegovernor"
+    select CPU_FREQ_GOV_GAMEGOVERNOR
+    help
+      Use the CPUFreq governor 'gamegovernor' as default.
+
 config CPU_FREQ_DEFAULT_GOV_PERFORMANCE
 	bool "performance"
 	select CPU_FREQ_GOV_PERFORMANCE
@@ -195,6 +201,12 @@ config CPU_FREQ_GOV_DOMINIKSGOV
     depends on CPU_FREQ
     help
       'governor' - a custom governor!
+
+config CPU_FREQ_GOV_GAMEGOVERNOR
+    tristate "'gamegovernor' cpufreq governor"
+    depends on CPU_FREQ
+    help
+      'gamegovernor' - a frame and thread based governor optimized for games!
 
 config CPU_FREQ_SYS_LOGGER 
     tristate "'sys_logger' tracer"
