@@ -2,6 +2,7 @@
 #define _DOMINIKS_GOV_GENEREL_SCHED_H_
 
 #define SIZE_WORKLOAD_HISTORY 21
+//#define SIZE_WORKLOAD_HISTORY 11
 
 typedef struct {
 	pid_t pid;
