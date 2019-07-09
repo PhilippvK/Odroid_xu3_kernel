@@ -54,7 +54,16 @@ struct sched_param {
 #include <linux/gfp.h>
 
 #include <asm/processor.h>
+
+// dominiksgov related includes
+#ifdef CONFIG_CPU_FREQ_GOV_DOMINIKSGOV
 #include <dominiksgov/cpufreq_dominiksgov_sched.h>
+#endif // CONFIG_CPU_FREQ_GOV_DOMINIKSGOV
+
+// gamegovernor related includes
+#ifdef CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR
+#include <gamegovernor/cpufreq_gamegovernor_sched.h>
+#endif // CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR
 
 
 struct exec_domain;
@@ -1062,8 +1071,10 @@ enum perf_event_task_context {
 };
 
 struct task_struct {
+#if defined(CONFIG_CPU_FREQ_GOV_DOMINIKSGOV) || defined(CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR)
     task_struct_expansion *task_informations;
     short task_struct_expansion_is_initialized;
+#endif // CONFIG_CPU_FREQ_GOV_DOMINIKSGOV || CONFIG_CPU_FREQ_GOV_GAMEGOVERNOR
 
 	volatile long state;	/* -1 unrunnable, 0 runnable, >0 stopped */
     void *stack;
