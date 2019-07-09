@@ -1138,15 +1138,15 @@ int write_thread_name_log(void *in){
         return -99;
     }
 
+    sprintf(buf, "%llu; ", (uint64_t)timestamp.tv_sec*(uint64_t)1.0e9+(uint64_t)timestamp.tv_nsec);
+
     KERNEL_ERROR_MSG("GOV|Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
-    //udelay(100);
     nr_write_threads2++;
     old_fs = get_fs();
     set_fs(KERNEL_DS);
 
-    mutex_lock(&logfile_thread_name_mutex);
     mutex_lock(&ts->task_informations->lock);
-    sprintf(buf, "%llu; ", (uint64_t)timestamp.tv_sec*(uint64_t)1.0e9+(uint64_t)timestamp.tv_nsec);
+    mutex_lock(&logfile_thread_name_mutex);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
     get_task_comm(buf, ts);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
@@ -1154,10 +1154,6 @@ int write_thread_name_log(void *in){
     sprintf(buf, "%lld", ts->task_informations->autocorr_max );
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
     for(a=0; a<SIZE_WORKLOAD_HISTORY ; a++){
-        //for(b=0; b<16; b++){
-        //	buf[b]='\0';
-        //}
-
         fp_thread_name_logging->f_op->write(fp_thread_name_logging, "; ", 2, &fp_thread_name_logging->f_pos);
         sprintf(buf, "%lld", ts->task_informations->workload_history[a]);
         fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
@@ -1166,10 +1162,9 @@ int write_thread_name_log(void *in){
 
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, " \n", 2, &fp_thread_name_logging->f_pos);
 
-    //KERNEL_ERROR_MSG("GOV|ACorr: %lld \n", ts->task_informations->autocorr_max);
     nr_write_threads2--;
-    mutex_unlock(&ts->task_informations->lock);
     mutex_unlock(&logfile_thread_name_mutex);
+    mutex_unlock(&ts->task_informations->lock);
     set_fs(old_fs);
 
     do_exit(0);
