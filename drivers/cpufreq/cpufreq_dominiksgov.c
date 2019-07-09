@@ -467,6 +467,12 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
                 nr_tasks_on_cpu[a]=0;
             }
 
+            if(!is_init) {
+                char buf[TASK_COMM_LEN];
+                get_task_comm(buf, current);
+                KERNEL_ERROR_MSG("GOV|CURRENT: pid=%i, comm=%s",current->pid, buf);
+            }
+
             //find the froup leader task
             group_leader_task=current->group_leader;
 
@@ -477,14 +483,18 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
             }
             //iterate through all tasks
             list_for_each_entry_safe(task, task_buffer ,&(group_leader_task->thread_group), thread_group){
-                process_task(task);
-                nr_tasks_on_cpu[task->task_informations->allocated_core]+=1;
+                //if(task->pid == current->pid) {
+                //    // TODO: handle?
+                //}
+                //else {
+                    process_task(task);
+                    nr_tasks_on_cpu[task->task_informations->allocated_core]+=1;
+                //}
             }
 
             //process group leader separately as it will not appear in the list_for_each_entry_safe loop
             process_task(group_leader_task);
             nr_tasks_on_cpu[group_leader_task->task_informations->allocated_core]+=1;
-
 
             //disable a15 if no tasks are assigned to it
             if (nr_tasks_a15==0 && (cpu_online(4) || cpu_online(5) || cpu_online(6) || cpu_online(7))){
@@ -756,32 +766,46 @@ long inline sched_setaffinity_own(struct task_struct *task, short core_nr){
 void inline init_task_struct_expansion(struct task_struct *task){
     int i;
     static short core_init=0;
+    //char buf[TASK_COMM_LEN];
+    //if (task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid) {
+    //    get_task_comm(buf, task);
+    //    KERNEL_ERROR_MSG("GOV|CLONE of Task %d (%s)\n", task->pid, buf);
+    //}
     //allocate memory for the task_struct_expansion struct
-    task->task_informations=(task_struct_expansion *)kmalloc(sizeof(task_struct_expansion), GFP_KERNEL);
-    if(task->task_informations==NULL){
-        KERNEL_ERROR_MSG("GOV|ERROR:  INIT of Task: %d  FAILED\n", task->pid);
-        return;
-    } /*else { // TODO: remove after test
-        KERNEL_ERROR_MSG("GOV|DEBUG:  INIT of Task %d with the following priorities: %d , %d , %d\n", task->pid, task->prio, task_prio(task), task_nice(task));
-        }*/
-    //init all vars inside the struct
-    task->task_informations->pid=task->pid;
-    task->task_struct_expansion_is_initialized=1;
-    for (i=0; i<SIZE_WORKLOAD_HISTORY; i++){
-        task->task_informations->workload_history[i]=0;
-    }
-    task->task_informations->autocorr_max=0;
-    task->task_informations->autocorr_shift=0;
-    task->task_informations->prediction=0;
-    task->task_informations->prediction_cycles=0;
-    task->task_informations->cpu_time=0;
-    task->task_informations->allocated_core=core_init;
+    //
+    //if(!(task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid && task->pid == current->pid)) {
+        task->task_informations=(task_struct_expansion *)kmalloc(sizeof(task_struct_expansion), GFP_KERNEL);
+        if(task->task_informations==NULL){
+            KERNEL_ERROR_MSG("GOV|ERROR:  INIT of Task: %d  FAILED\n", task->pid);
+            return;
+        }
+        
+        //init all vars inside the struct
+        mutex_init(&task->task_informations->lock);
+        task->task_informations->pid=task->pid;
+        task->task_struct_expansion_is_initialized=1;
+        for (i=0; i<SIZE_WORKLOAD_HISTORY; i++){
+            task->task_informations->workload_history[i]=0;
+        }
+        task->task_informations->autocorr_max=0;
+        task->task_informations->autocorr_shift=0;
+        task->task_informations->prediction=0;
+        task->task_informations->prediction_cycles=0;
+        task->task_informations->cpu_time=0;
+        task->task_informations->allocated_core=core_init;
 
-    core_init++;
-    //spread the initial core affinity over all cores of the A7
-    if(core_init>3){
-        core_init=0;
-    }
+        core_init++;
+        //spread the initial core affinity over all cores of the A7
+        if(core_init>3){
+            core_init=0;
+        }
+    //} else {
+    //    if(task->task_informations==NULL){
+    //        KERNEL_ERROR_MSG("GOV|ERROR: CLONE of Task: %d  FAILED\n", task->pid);
+    //        return;
+    //    }
+    //    task->task_informations->pid=task->pid;
+    //}
 }
 
 //get the workload of a task of the last frame and update the workload history
