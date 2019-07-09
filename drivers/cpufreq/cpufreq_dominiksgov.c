@@ -476,11 +476,6 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
             //find the froup leader task
             group_leader_task=current->group_leader;
 
-            // TODO: test
-            while (nr_write_threads2 > 0) {
-                KERNEL_ERROR_MSG("GOV|nr_write_threads2 > 0 (%lld)!\n",nr_write_threads2);
-                udelay(100);
-            }
             //iterate through all tasks
             list_for_each_entry_safe(task, task_buffer ,&(group_leader_task->thread_group), thread_group){
                 //if(task->pid == current->pid) {
@@ -1126,6 +1121,8 @@ int write_thread_name_log(void *in){
     struct task_struct *ts;
     char buf[16]={"\0"};
     int a; //, b;
+    struct timespec timestamp;
+    getrawmonotonic(&timestamp);
 
     ts=(struct task_struct*)in;
 
@@ -1135,15 +1132,18 @@ int write_thread_name_log(void *in){
         return -99;
     }
 
-    //KERNEL_ERROR_MSG("GOV|Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
+    KERNEL_ERROR_MSG("GOV|Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
     //udelay(100);
     nr_write_threads2++;
     old_fs = get_fs();
     set_fs(KERNEL_DS);
 
     mutex_lock(&logfile_thread_name_mutex);
-    fp_thread_name_logging->f_op->write(fp_thread_name_logging, ts->comm, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
     mutex_lock(&ts->task_informations->lock);
+    sprintf(buf, "%llu; ", (uint64_t)timestamp.tv_sec*(uint64_t)1.0e9+(uint64_t)timestamp.tv_nsec);
+    fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
+    get_task_comm(buf, ts);
+    fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, "; ", 2, &fp_thread_name_logging->f_pos);
     sprintf(buf, "%lld", ts->task_informations->autocorr_max );
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
