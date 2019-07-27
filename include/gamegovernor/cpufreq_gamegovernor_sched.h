@@ -18,6 +18,6 @@ typedef struct {
 	int64_t cpu_time;
 	short allocated_core;
     struct mutex lock;
-} task_struct_expansion;
+}task_struct_expansion;
 
 #endif // _GAMEGOVERNOR_SCHED_H_
