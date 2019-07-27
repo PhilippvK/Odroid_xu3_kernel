@@ -20,4 +20,4 @@ fastboot reboot
 
 $ROOT_DIR/install_modules.sh "$ANDROID_DEVICE"
 
-#fastboot reboot # TODO: needed?
+fastboot reboot
