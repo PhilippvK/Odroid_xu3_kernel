@@ -331,34 +331,42 @@ static int cpufreq_governor_gamegovernor(struct cpufreq_policy *policy, unsigned
 
 #ifdef DO_LOGGING
                 /*
-                 * Close logfile
+                 * Close logfile (if open)
                  */
-                old_fs = get_fs(); // File System
-                set_fs(KERNEL_DS);
+                if (logging_file_open) {
+                    old_fs = get_fs(); // File System
+                    set_fs(KERNEL_DS);
 
-                mutex_lock(&logfile_mutex); // File
-                filp_close(fp_loggin_file, 0);
-                logging_file_open=0;
-                KERNEL_DEBUG_MSG("GOV|DEBUG: Closed Logging File\n");
-                mutex_unlock(&logfile_mutex);
+                    mutex_lock(&logfile_mutex); // File
+                    filp_close(fp_loggin_file, 0);
+                    logging_file_open=0;
+                    KERNEL_DEBUG_MSG("GOV|DEBUG:Closed Logging File\n");
+                    mutex_unlock(&logfile_mutex);
 
-                set_fs(old_fs); // Done
+                    set_fs(old_fs); // Done
+                } else {
+                    KERNEL_WARNING_MSG("GOV|WARNING:Logging File already closed\n");
+                }
 #endif
 
 #ifdef THREAD_NAME_LOGGING
                 /*
                  * Close logfile
                  */
-                old_fs = get_fs(); // File System
-                set_fs(KERNEL_DS);
+                if (logging_file_thread_name_open) {
+                    old_fs = get_fs(); // File System
+                    set_fs(KERNEL_DS);
 
-                mutex_lock(&logfile_thread_name_mutex); // File
-                filp_close(fp_thread_name_logging, 0);
-                logging_file_thread_name_open=0;
-                KERNEL_DEBUG_MSG("GOV|DEBUG: Closed Thread Name Logging File\n");
-                mutex_unlock(&logfile_thread_name_mutex);
+                    mutex_lock(&logfile_thread_name_mutex); // File
+                    filp_close(fp_thread_name_logging, 0);
+                    logging_file_thread_name_open=0;
+                    KERNEL_DEBUG_MSG("GOV|DEBUG:Closed Thread Name Logging File\n");
+                    mutex_unlock(&logfile_thread_name_mutex);
 
-                set_fs(old_fs); // Done
+                    set_fs(old_fs); // Done
+                } else {
+                    KERNEL_WARNING_MSG("GOV|WARNING:Thread Logging File already closed\n");
+                }
 #endif
             }
 
