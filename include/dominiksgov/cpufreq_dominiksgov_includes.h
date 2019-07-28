@@ -1,7 +1,7 @@
 #ifndef _DOMINIKS_GOV_GENEREL_H_
 #define _DOMINIKS_GOV_GENEREL_H_
 
-//#include"../../workspace_eclipse/unit_tests/includes/unit_tests.h"
+#include "dominiksgov/unit_tests.h"
 #include <linux/types.h>
 #include <dominiksgov/cpufreq_dominiksgov_sched.h>
 #include <dominiksgov/cpufreq_dominiksgov_eglapi.h>
