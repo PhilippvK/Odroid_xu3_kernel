@@ -1,6 +1,6 @@
 #!/bin/sh
 
-ROOT_DIR="/home/foo/Android7.1/kernel/hardkernel/odroidxu3"
+ROOT_DIR="/home/foo/Android7.1_new/kernel/hardkernel/odroidxu3"
 
 if [ $# -eq 0 ]
 then
