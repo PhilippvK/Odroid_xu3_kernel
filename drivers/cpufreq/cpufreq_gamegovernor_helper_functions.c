@@ -13,6 +13,7 @@
 // How many past workloads should be evaluated
 #define WMA_length 14
 
+#include <linux/sched.h>
 #include <gamegovernor/cpufreq_gamegovernor_includes.h>
 
 #ifdef UNIT_TEST

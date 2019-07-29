@@ -994,16 +994,15 @@ void inline init_task_struct_expansion(struct task_struct *task)
      * Allocate memory for the task_struct_expansion struct
      */
     task->task_informations=(task_struct_expansion *)kmalloc(sizeof(task_struct_expansion), GFP_KERNEL);
-    if(task->task_informations==NULL) { // handle error
-        KERNEL_ERROR_MSG("GOV|ERROR:  INIT of Task: %d  FAILED\n", task->pid);
+    if (task->task_informations==NULL) { // handle error
+        KERNEL_ERROR_MSG("GOV|ERROR: INIT of Task: %d  FAILED\n", task->pid);
         return;
-    } /*else { // TODO: remove after test
-        KERNEL_DEBUG_MSG("GOV|DEBUG:  INIT of Task %d with the following priorities: %d , %d , %d\n", task->pid, task->prio, task_prio(task), task_nice(task));
-    }*/
+    }
 
     /*
      * Init all vars inside the struct
      */
+    mutex_init(&task->task_informations->lock);
     task->task_informations->pid=task->pid;             // process id
     task->task_struct_expansion_is_initialized=1;       // true if initialized
     for (i=0; i<SIZE_WORKLOAD_HISTORY; i++){            // workload history
@@ -1011,21 +1010,9 @@ void inline init_task_struct_expansion(struct task_struct *task)
     }
     task->task_informations->autocorr_max=0;            // max autocorrelation value
     task->task_informations->autocorr_shift=0;          // best  autocorrelation shift
-    task->task_informations->prediction=0;              // predicted workload (TODO: dim?)
+    task->task_informations->prediction=0;              // predicted workload
     task->task_informations->prediction_cycles=0;       // predicted cycles
     task->task_informations->cpu_time=0;                // accumulated cpu time
-    task->task_informations->allocated_core=core_init;  // current core
-
-    /*
-     * Spread the initial core affinity over all cores of the A7
-     * WARNING:
-     *  As there is at least one new task every frame, oscilations
-     *  in the number of tasks per core are very likely
-     */
-    core_init++;
-    if(core_init>3) {
-        core_init=0;
-    }
 }
 
 /*
@@ -1514,32 +1501,41 @@ int write_thread_name_log(void *in)
     mm_segment_t old_fs; // File system pointer
     char buf[16]={"\0"}; // Buffer
     int a; // Loop variable
+    struct timespec timestamp; // Log time
+   getrawmonotonic(&timestamp);
 
     ts=(struct task_struct*)in; // Copy reference
 
     // Error handling
     if (in==NULL || fp_thread_name_logging==NULL) {
-        KERNEL_ERROR_MSG("GOV|ERROR:Can't write log because file is closed\n");
+        KERNEL_ERROR_MSG("GOV|ERROR: Can't write log because file is closed\n");
         do_exit(-99);
         return -99; // File Closed Error
     }
+
+    // Write timestamp in buffer
+    sprintf(buf, "%llu; ", (uint64_t)timestamp.tv_sec*(uint64_t)1.0e9+(uint64_t)timestamp.tv_nsec);
 
     /*
      * As the thread name logs are beeing written every 10 seconds and often
      * more than 100 game threads are active, they have to write to the file
      * one after each other. Concurrent access is restricted by a mutex.
      */
-    KERNEL_DEBUG_MSG("GOV|DEBUG:Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
+    KERNEL_DEBUG_MSG("GOV|DEBUG: Writing Thread Name Log, Nr Threads waiting: %lld\n", nr_write_threads2);
 
     nr_write_threads2++;
-    
+
     // init file system
     old_fs = get_fs();
     set_fs(KERNEL_DS);
 
+    mutex_lock(&ts->task_informations->lock);
     // lock/unclock file for writing a row of data
     mutex_lock(&logfile_thread_name_mutex);
-    // begin line
+    fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, strlen(buf), &fp_thread_name_logging->f_pos);
+    get_task_comm(buf, ts);
+    fp_thread_name_logging->f_op->write(fp_thread_name_logging, buf, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
+	// begin line
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, ts->comm, TASK_COMM_LEN, &fp_thread_name_logging->f_pos);
     fp_thread_name_logging->f_op->write(fp_thread_name_logging, "; ", 2, &fp_thread_name_logging->f_pos);
     // max autocorrelation value
@@ -1557,6 +1553,7 @@ int write_thread_name_log(void *in)
     // done
     nr_write_threads2--;
     mutex_unlock(&logfile_thread_name_mutex);
+	mutex_unlock(&ts->task_informations->lock);
     set_fs(old_fs);
 
     do_exit(0); // success
