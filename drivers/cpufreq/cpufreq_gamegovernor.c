@@ -138,12 +138,10 @@ int shutdown_counter_a15=0; // reduce hotplugging overhead
 /*
  * Logging Variables
  */
-short logging_file_open =0;
-short logging_file_thread_name_open=0;
-struct file *fp_thread_name_logging=NULL;
 
 #ifdef DO_LOGGING
 struct file *fp_loggin_file=NULL;
+short logging_file_open=0;
 log_struct log_str= { // //struct to be written in the logfile
     .nr=0,
     .a7_freq=0,
@@ -158,6 +156,10 @@ log_struct log_str= { // //struct to be written in the logfile
 };
 #endif // DO_LOGGING
 
+#ifdef THREAD_NAME_LOGGING
+struct file *fp_thread_name_logging=NULL;
+short logging_file_thread_name_open=0;
+#endif // THREAD_NAME_LOGGING
 /*
  * Initialize Timer
  */
@@ -333,7 +335,7 @@ static int cpufreq_governor_gamegovernor(struct cpufreq_policy *policy, unsigned
                 /*
                  * Close logfile (if open)
                  */
-                if (logging_file_open) {
+                if (logging_file_open && fp_loggin_file != NULL) {
                     old_fs = get_fs(); // File System
                     set_fs(KERNEL_DS);
 
@@ -353,7 +355,7 @@ static int cpufreq_governor_gamegovernor(struct cpufreq_policy *policy, unsigned
                 /*
                  * Close logfile
                  */
-                if (logging_file_thread_name_open) {
+                if (logging_file_thread_name_open && fp_thread_name_logging != NULL) {
                     old_fs = get_fs(); // File System
                     set_fs(KERNEL_DS);
 
