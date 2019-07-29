@@ -26,6 +26,8 @@
 // Define to enable powergating
 #define POWERGATING_GAMEOPTIMIZED_GOV
 
+// Experimental handling of current thread
+//#define HANDLE_CURRENT
 
 // Define for debugging purposes
 //#define GOV_PRINT_SPACES

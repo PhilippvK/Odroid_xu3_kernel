@@ -639,25 +639,37 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg )
                 nr_tasks_on_cpu[a]=0;
             }
 
+#ifdef DO_DEBUG
+            if (!is_init) {
+                char buf[TASK_COMM_LEN];
+                get_task_comm(buf, current);
+                KERNEL_ERROR_MSG("GOV|CURRENT: pid=%i, comm=%s",current->pid, buf);
+            }
+#endif // DO_DEBUG
+
             //find the froup leader task
             group_leader_task=current->group_leader;
 
-#ifdef THREAD_NAME_LOGGING
-            // TODO: replace with read mutex
-            while (nr_write_threads2 > 0) {
-                KERNEL_ERROR_MSG("GOV|ERROR: nr_write_threads2 > 0 (%lld)!\n",nr_write_threads2);
-                // Somehow this can get stuck...
-                udelay(100);
-            }
-#endif // THREAD_NAME_LOGGING
+#ifdef HANDLE_CURRENT
+            set_user_nice(current, -19); // give current task a high priority
+            process_task(current);
+#endif // HANDLE_CURRENT
 
             /*
              * Iterate through all tasks (except group leader)
              */
             list_for_each_entry_safe(task, task_buffer ,&(group_leader_task->thread_group), thread_group) {
+#ifdef HANDLE_CURRENT
+                if (task->pid != current->pid) {
+                    process_task(task);
+                    // update number of threads on CPUs
+                    nr_tasks_on_cpu[task->task_informations->allocated_core]+=1;
+                }
+#else
                 process_task(task);
                 // update number of threads on CPUs
                 nr_tasks_on_cpu[task->task_informations->allocated_core]+=1;
+#endif // HANDLE_CURRENT
             }
 
             /*
@@ -896,10 +908,14 @@ void inline process_task(struct task_struct *task)
     if (task->task_struct_expansion_is_initialized==0) {
         init_task_struct_expansion(task);
     }
-    if(task->task_informations->pid!=task->pid) {
+	// If task was cloned from another task, do a new initialization
+    if (task->task_informations->pid!=task->pid) {
         init_task_struct_expansion(task);
     }
 
+#ifdef HANDLE_CURRENT
+	if(task->pid != current->pid) {
+#endif // HANDLE_CURRENT
     // Update the workload history of the task
     update_workload_history(task);
 
@@ -914,7 +930,16 @@ void inline process_task(struct task_struct *task)
     //allocate the task to a core and (if needed) increase the cpu frequency (variable)
     perform_task_allocation(task);
 
+#ifdef DO_DEBUG
     thread_count++;
+#endif // DO_DEBUG
+
+#ifdef HANDLE_CURRENT
+	} else {
+    // Do nothing else than allocating on core 0
+    sched_setaffinity_own(task, 0); // current task pinned to A7.1
+    }
+#endif // HANDLE_CURRENT
 }
 
 /*
@@ -999,9 +1024,31 @@ void inline init_task_struct_expansion(struct task_struct *task)
         return;
     }
 
+	#ifdef HANDLE_CURRENT
     /*
      * Init all vars inside the struct
      */
+	if(!(task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid && task->pid == current->pid)) {
+	#endif // HANDLE_CURRENT
+	task->task_informations->allocated_core=core_init;
+
+    core_init++;
+    /*
+     * Spread the initial core affinity over all cores of the A7
+     * WARNING:
+     *  As there is at least one new task every frame, oscilations
+     *  in the number of tasks per core are very likely
+     */
+    if(core_init>3){
+        core_init=1;
+    }
+
+	#ifdef HANDLE_CURRENT
+	} else {
+	task->task_informations->allocated_core=0; // allocate current task only to A7.1
+	}
+	#endif // HANDLE_CURRENT
+
     mutex_init(&task->task_informations->lock);
     task->task_informations->pid=task->pid;             // process id
     task->task_struct_expansion_is_initialized=1;       // true if initialized
@@ -1290,8 +1337,13 @@ short inline check_space_left_and_assignA7(struct task_struct *task, short core_
  */
 short inline get_max_spaceA7(void *pointer)
 {
-    int i; // loop variable
+#ifdef HANDLE_CURRENT
+    int i=2; // loop variable
+    short core=1; // return value
+#else
+    int i=1; // loop variable
     short core=0; // return value
+#endif // HANDLE_CURRENT
 
     // iterate over core spaces
     for (i; i<4; i++ ){
@@ -1312,12 +1364,12 @@ short inline get_max_spaceA7(void *pointer)
  */
 short inline get_max_spaceA15(void *pointer)
 {
-    int i; // loop variabke
+    int i=1; // loop variable
     short core=0; // return value
 
     // iterate over core spaces
-    for (i=1; i<4; i++){
-        if(a15space[i] > a15space[core]){
+    for (i; i<4; i++){
+        if (a15space[i] > a15space[core]){
             core = i;
         }
     }
