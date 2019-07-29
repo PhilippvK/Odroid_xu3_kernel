@@ -738,6 +738,14 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg )
              */
             is_init=1;
 
+#ifdef GOV_PRINT_SPACES
+			/*
+			 * Format:
+			 *  SpaceLeft[cpu0,...,cpu7],SpaceInit[a7,a15],...
+			 *  SpaceFreq[a7,a17],SpaceDecr[a7,a15]
+			 */
+            KERNEL_ERROR_MSG("GOV|SPACES:%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;%llu;\n",a7space[0],a7space[1],a7space[2],a7space[3],a15space[0],a15space[1],a15space[2],a15space[3],a7space_init,a15space_init,a7space_init+curr_frequ_a7_nr*a7_space_increase_per_frequency,a15space_init+curr_frequ_a15_nr*a15_space_increase_per_frequency,a7space_decrementa15space_decrement);
+#endif // GOV_PRINT_SPACES
 
 exit:
             iciotl_new_frame_inuse=0; // allow new incoming frames
