@@ -16,3 +16,6 @@ $ADB $OPTIONAL_ANDROID_ID wait-for-device
 $ADB $OPTIONAL_ANDROID_ID shell mount -o rw,remount /system
 $ADB $OPTIONAL_ANDROID_ID shell chmod 777 $DEST_DIR
 $ADB $OPTIONAL_ANDROID_ID push ${MODULES[*]} $DEST_DIR
+
+# Push sys_logger to device if enabled
+test -f drivers/cpufreq/sys_logger.ko && $ADB $OPTIONAL_ANDROID_ID push drivers/cpufreq/sys_logger.ko /data/local/tmp/sys_logger.ko
