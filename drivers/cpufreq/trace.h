@@ -3,7 +3,7 @@
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM sys_logger
-#define TRACE_INCLUDE_PATH /home/foo/Android7.1/kernel/hardkernel/odroidxu3/drivers/cpufreq
+#define TRACE_INCLUDE_PATH /home/foo/Android7.1_new/kernel/hardkernel/odroidxu3/drivers/cpufreq
 #undef TRACE_INCLUDE_FILE
 #define TRACE_INCLUDE_FILE trace
 

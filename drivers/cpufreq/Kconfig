@@ -65,7 +65,7 @@ config CPU_FREQ_DEFAULT_GOV_DOMINIKSGOV
     help
       Use the CPUFreq governor 'dominiksgov' as default.
 
-config CPU_FREQ_DEFAULT_GOV_GAMEGOVERNORV
+config CPU_FREQ_DEFAULT_GOV_GAMEGOVERNOR
     bool "gamegovernor"
     select CPU_FREQ_GOV_GAMEGOVERNOR
     help
