@@ -495,7 +495,8 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg )
                  * (mostly if game or level is loading)
                  */
                 KERNEL_WARNING_MSG("GOV|WARNING: Invalid Frame Rate: %llu\n", frame_rate);
-                goto exit; // skip rest
+                frame_rate=1000; // handle too high fps like a lower framerate
+                time_buf=ioctl_arg.time-div64_u64(10e9, 100);
             }
 
             /*
