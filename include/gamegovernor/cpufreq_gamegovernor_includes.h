@@ -2,14 +2,14 @@
 #define _GAMEGOVERNOR_INCLUDES_H_
 
 #include <linux/types.h>
-#include <gamegovernor/cpufreq_gamegovernor_sched.h>
 #include <gamegovernor/cpufreq_gamegovernor_eglapi.h>
 
 #ifdef UNIT_TEST
 	#include <sys/types.h>
 	#include <stdint.h>
 	int64_t div64_s64(int64_t a, int64_t b);
-#endif // UNIT_TEST
+#else
+    #include <gamegovernor/cpufreq_gamegovernor_sched.h>
 
 /*
  * Defines for configuration of governor
@@ -33,6 +33,8 @@
 	#define LOGFILE_THREAD_NAME "/data/local/gamegovernor/Thread_Name_LOG"
 	#pragma message("Compiled with thread name logging flag!")
 #endif // THREAD_NAME_LOGGING
+
+#endif // UNIT_TEST
 
 // Migration factor between A7 and A15 cores
 // Determined by benchmarking
