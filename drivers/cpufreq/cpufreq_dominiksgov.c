@@ -476,17 +476,19 @@ static long MyIOctl( struct file *File,unsigned int cmd, unsigned long arg  )
             //find the froup leader task
             group_leader_task=current->group_leader;
 
+            // TODO: test processing current task first
+            set_user_nice(current, -19); // give current task a high priority
+            process_task(current);
+
             //iterate through all tasks
             list_for_each_entry_safe(task, task_buffer ,&(group_leader_task->thread_group), thread_group){
-                //if(task->pid == current->pid) {
-                //    // TODO: handle?
-                //}
-                //else {
+                if(task->pid != current->pid) {
                     process_task(task);
                     nr_tasks_on_cpu[task->task_informations->allocated_core]+=1;
-                //}
+                }
             }
 
+            // TODO: test processing group leader beforehand
             //process group leader separately as it will not appear in the list_for_each_entry_safe loop
             process_task(group_leader_task);
             nr_tasks_on_cpu[group_leader_task->task_informations->allocated_core]+=1;
@@ -699,25 +701,30 @@ void inline process_task(struct task_struct *task){
         init_task_struct_expansion(task);
     }
 
-    mutex_lock(&task->task_informations->lock);
+    if(task->pid != current->pid) {
+        mutex_lock(&task->task_informations->lock);
 
-    //update the workload history of the task
-    update_workload_history(task);
+        //update the workload history of the task
+        update_workload_history(task);
 
-    //if autocorrtimer has expired -> update the autocorellation of the task
-    if(autocorr_timer.timer_expired==1){
-        update_autocorr(task);
+        //if autocorrtimer has expired -> update the autocorellation of the task
+        if(autocorr_timer.timer_expired==1){
+            update_autocorr(task);
+        }
+
+        //perform the workload prediction for the task
+        perform_workload_prediction(task);
+
+        //allocate the task to a core and (if needed) increase the cpu frequency (variable)
+        perform_task_allocation(task);
+
+        thread_count++;
+
+        mutex_unlock(&task->task_informations->lock);
+    } else {
+        // TODO: do nothing?
+        sched_setaffinity_own(task, 0); // current task pinned to A7.1
     }
-
-    //perform the workload prediction for the task
-    perform_workload_prediction(task);
-
-    //allocate the task to a core and (if needed) increase the cpu frequency (variable)
-    perform_task_allocation(task);
-
-    thread_count++;
-
-    mutex_unlock(&task->task_informations->lock);
 }
 
 //set the affinity of a task to a core (core_nr: 0-7)
@@ -766,15 +773,14 @@ long inline sched_setaffinity_own(struct task_struct *task, short core_nr){
 //initialization of expansions of the task_struct
 void inline init_task_struct_expansion(struct task_struct *task){
     int i;
-    static short core_init=0;
-    //char buf[TASK_COMM_LEN];
+    static short core_init=1;
+    //char buf[TASK_COMM_LEN] // allocate current task only to A7.1;
     //if (task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid) {
     //    get_task_comm(buf, task);
     //    KERNEL_ERROR_MSG("GOV|CLONE of Task %d (%s)\n", task->pid, buf);
     //}
     //allocate memory for the task_struct_expansion struct
     //
-    //if(!(task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid && task->pid == current->pid)) {
         task->task_informations=(task_struct_expansion *)kmalloc(sizeof(task_struct_expansion), GFP_KERNEL);
         if(task->task_informations==NULL){
             KERNEL_ERROR_MSG("GOV|ERROR:  INIT of Task: %d  FAILED\n", task->pid);
@@ -782,6 +788,17 @@ void inline init_task_struct_expansion(struct task_struct *task){
         }
         
         //init all vars inside the struct
+    if(!(task->task_struct_expansion_is_initialized!=0 && task->task_informations->pid!=task->pid && task->pid == current->pid)) {
+        task->task_informations->allocated_core=core_init;
+
+        core_init++;
+        //spread the initial core affinity over all cores of the A7
+        if(core_init>3){
+            core_init=1;
+        }
+    } else {
+        task->task_informations->allocated_core=0; // allocate current task only to A7.1
+    }
         mutex_init(&task->task_informations->lock);
         task->task_informations->pid=task->pid;
         task->task_struct_expansion_is_initialized=1;
@@ -793,20 +810,6 @@ void inline init_task_struct_expansion(struct task_struct *task){
         task->task_informations->prediction=0;
         task->task_informations->prediction_cycles=0;
         task->task_informations->cpu_time=0;
-        task->task_informations->allocated_core=core_init;
-
-        core_init++;
-        //spread the initial core affinity over all cores of the A7
-        if(core_init>3){
-            core_init=0;
-        }
-    //} else {
-    //    if(task->task_informations==NULL){
-    //        KERNEL_ERROR_MSG("GOV|ERROR: CLONE of Task: %d  FAILED\n", task->pid);
-    //        return;
-    //    }
-    //    task->task_informations->pid=task->pid;
-    //}
 }
 
 //get the workload of a task of the last frame and update the workload history
@@ -988,7 +991,7 @@ short inline check_space_left_and_assignA7(struct task_struct *task, short core_
 
 short inline get_max_spaceA7(void *pointer){
     int i;
-    short core=0;
+    short core=1;
     //int64_t buf=a7space[0];
 
     for (i=1; i<4; i++){
